@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="sr-Latn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teretana — rezervacija termina</title>
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <button id="preskoci-na-sadrzaj" class="preskoci-na-sadrzaj" type="button" data-testid="preskoci-na-sadrzaj">Preskoči na sadržaj</button>
+
+  <header class="zaglavlje">
+    <div class="zaglavlje-sadrzaj">
+      <a class="naziv-aplikacije" href="#/" data-testid="pocetna-link">Teretana</a>
+      <nav id="navigacija" aria-label="Glavna navigacija"></nav>
+      <div id="profil" class="profil"></div>
+    </div>
+  </header>
+
+  <div id="obavestenje" class="obavestenje" role="status" aria-live="polite" data-testid="obavestenje" hidden></div>
+
+  <main id="sadrzaj" class="sadrzaj" tabindex="-1"></main>
+
+  <footer class="podnozje">
+    <section class="status-sistema" aria-labelledby="status-sistema-naslov">
+      <h2 id="status-sistema-naslov">Status sistema</h2>
+      <button id="status-sistema-proveri" type="button" data-testid="status-sistema-proveri">Proveri</button>
+      <p id="status-sistema-rezultat" data-testid="status-sistema-rezultat" role="status" aria-live="polite"></p>
+    </section>
+  </footer>
+</body>
+</html>

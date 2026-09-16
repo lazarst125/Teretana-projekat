@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-i-testovi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: |
+          dotnet restore Teretana.sln
+          dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.5.11
+
+      - name: Provera formata koda
+        run: dotnet format Teretana.sln --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build Teretana.sln --configuration Release --no-restore
+
+      - name: Komponentni testovi (NUnit)
+        run: >-
+          dotnet test tests/Teretana.KomponentniTestovi
+          --configuration Release --no-build
+          --logger "trx;LogFileName=komponentni.trx"
+          --results-directory TestResults
+          --collect "XPlat Code Coverage" --settings tests/pokrivenost.runsettings
+
+      # Fixture instalira sam browser, ali sistemske biblioteke za Linux traže --with-deps.
+      - name: Instalacija Chromium-a sa sistemskim zavisnostima
+        run: pwsh tests/Teretana.PlaywrightTestovi/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Playwright API i E2E testovi
+        run: >-
+          dotnet test tests/Teretana.PlaywrightTestovi
+          --configuration Release --no-build
+          --logger "trx;LogFileName=playwright.trx"
+          --results-directory TestResults
+          --collect "XPlat Code Coverage" --settings tests/pokrivenost.runsettings
+
+      - name: Izveštaj o pokrivenosti koda
+        if: ${{ !cancelled() && hashFiles('TestResults/**/coverage.cobertura.xml') != '' }}
+        run: |
+          reportgenerator \
+            -reports:"TestResults/**/coverage.cobertura.xml" \
+            -targetdir:TestResults/pokrivenost \
+            -reporttypes:"HtmlInline;MarkdownSummaryGithub;TextSummary"
+          cat TestResults/pokrivenost/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload rezultata testova
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rezultati-testova
+          path: |
+            TestResults/*.trx
+            tests/Teretana.PlaywrightTestovi/bin/Release/net10.0/playwright-artefakti/
+          if-no-files-found: ignore
+
+      - name: Upload izveštaja o pokrivenosti
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: izvestaj-pokrivenosti
+          path: TestResults/pokrivenost/
+          if-no-files-found: ignore
